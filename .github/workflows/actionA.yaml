@@ -5,6 +5,7 @@ on:
   pull_request:
     types:
       - opened
+      - reopened
     branches:
       - main
     
@@ -39,6 +40,11 @@ jobs:
             /repos/${{ github.repository }}/actions/variables \
             -f name="$NEW_VAR_NAME" \
             -f value="$NEW_VAR_VALUE"
+
+      - name: Dump vars context
+        env:
+          VARS_JSON: ${{ toJSON(vars) }}
+        run: echo "${VARS_JSON}"
             
       - name: Comment on PR
         env:
@@ -47,4 +53,4 @@ jobs:
           PATCH_NUM="${{ steps.increment.outputs.value }}"
           VAR_NAME="Patch${PATCH_NUM}"
           
-          gh pr comment ${{ github.event.pull_request.number }} --body "Created new variable: ${VAR_NAME} = ${PATCH_NUM}"
+          gh pr comment ${{ github.event.pull_request.number }} --body "Patch number revserved in variable ${VAR_NAME} with value = ${PATCH_NUM}"
