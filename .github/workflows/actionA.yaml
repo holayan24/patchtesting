@@ -16,6 +16,8 @@ jobs:
       pull-requests: write
       contents: write
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
       - name: Increment patch number
         id: increment
