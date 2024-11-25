@@ -1,0 +1,50 @@
+permissions: write-all
+
+name: Increment Patch Number
+on:
+  pull_request:
+    types:
+      - opened
+    branches:
+      - master
+    
+jobs:
+  increment-patch:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Increment patch number
+        id: increment
+        uses: action-pack/increment@v2
+        with:
+          name: 'PATCH_NUMBER'
+          token: ${{ secrets.MY_TOKEN }}
+          
+      - name: Create new variable with patch number
+        env:
+          GH_TOKEN: ${{ secrets.MY_TOKEN }}
+        run: |
+          NEW_VAR_NAME="Patch${{ steps.increment.outputs.value }}"
+          NEW_VAR_VALUE="${{ steps.increment.outputs.value }}"
+          
+          # Create the new variable using GitHub CLI
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            /repos/${{ github.repository }}/actions/variables \
+            -f name="$NEW_VAR_NAME" \
+            -f value="$NEW_VAR_VALUE"
+            
+      - name: Comment on PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PATCH_NUM="${{ steps.increment.outputs.value }}"
+          VAR_NAME="Patch${PATCH_NUM}"
+          
+          gh pr comment ${{ github.event.pull_request.number }} --body "Created new variable: ${VAR_NAME} = ${PATCH_NUM}"
